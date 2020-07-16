@@ -1,26 +1,29 @@
-   // A GET request to the Open Weather Map API in an Async function
-
-   let baseURL = 'http://api.openweathermap.org/data/2.5/weather?zip=';
-   let zipCode = '02215';
-   let apiKey = ',us&appid=e01326745c3f1d77e53a7d7bdef1f809';
+   /* Global Variables */
+   const baseURL = 'http://api.openweathermap.org/data/2.5/weather?zip=';
+   const zipCode = '';
+   const apiKey = ',us&appid=e01326745c3f1d77e53a7d7bdef1f809';
 
    // Add a click listener to the 'generate' button
    document.getElementById('generate').addEventListener('click', performAction);
 
-   // Runs a function to post data to the '/addNewLocation' post route
+   // Function called by event listener to post data to the '/addWeatherData' POST route
    function performAction(e) {
-       getWeatherInfo(baseURL, zipCode, apiKey).then(data => {
-           console.log(data);
-           postData('/addNewLocation', {
+
+       const zipCode = document.getElementById("zip").value;
+       const feelings = document.getElementById("feelings").value;
+
+       getWeatherData(baseURL, zipCode, apiKey).then(function (data) {
+           postData('/addWeatherData', {
                temperature: data.main.temp,
-               date: data.date,
-               userResponse: data["user response"]
+               zip: zip,
+               feelings: feelings
            })
-       });
+           updateUI();
+       })
    }
 
-   // Runs getWeatherInfo function, which fetches the Open Weather App JSON data
-   const getWeatherInfo = async (url, zip, key) => {
+   // Function to GET Web API data by fetching the Open Weather App JSON data
+   const getWeatherData = async (url, zip, key) => {
 
        const res = await fetch(url + zip + key).then()
        try {
@@ -34,9 +37,7 @@
 
    }
 
-   // POST CALL - A request to store all the data we received locally in our app
-
-   // The POST request - accessing the POST route we setup in server.js. 
+   // Function to POST data on the POST route we setup in server.js. 
    const postData = async (url = '', data = {}) => {
        const response = await fetch(url, {
            method: 'POST',
@@ -51,14 +52,33 @@
 
        try {
            const newData = await response.json();
-           console.log(newData);
            return newData;
+
        } catch (error) {
-           console.log("error", error);
+           console.log("Error:", error);
        }
    }
 
+   // Function to GET Project Data and update UI
+   const updateUI = async () => {
+       const request = await fetch('/weather-data').then()
+       try {
+           const allData = await request.json();
+           console.log(allData);
+           document.getElementById("content").innerHTML = allData.feelings;
+           document.getElementById("displayTemp").innerHTML = allData.temperature;
+       } catch (error) {
+           console.log("Error:", error)
+       }
+   }
 
-   // postData('/add', {
-   //     answer: 42
-   // });
+   window.addEventListener('load', () => {
+       console.log('page is fully loaded');
+       let today = new Date();
+       const dd = String(today.getDate()).padStart(2, '0');
+       const mm = String(today.getMonth() + 1).padStart(2, '0');
+       const yyyy = today.getFullYear();
+
+       today = mm + '/' + dd + '/' + yyyy;
+       document.getElementById("date").innerHTML = today;
+   });
